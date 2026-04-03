@@ -64,6 +64,10 @@ def create_driver():
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--disable-extensions")
+        chrome_options.add_argument("--disable-software-rasterizer")
+        chrome_options.add_argument("--blink-settings=imagesEnabled=false")
+        chrome_options.add_argument("--single-process")
         chrome_options.add_argument("--window-size=1920,1080")
         for binary in ["/usr/bin/chromium-browser", "/usr/bin/chromium"]:
             if os.path.exists(binary):
@@ -103,16 +107,12 @@ def create_driver():
             else:
                 # Selenium Manager path: can auto-manage driver/browser.
                 driver = webdriver.Chrome(options=chrome_options)
-        except Exception:
-            try:
-                driver = webdriver.Chrome(options=chrome_options)
-            except Exception:
-                from webdriver_manager.chrome import ChromeDriverManager
-
-                driver = webdriver.Chrome(
-                    service=Service(ChromeDriverManager().install()),
-                    options=chrome_options,
-                )
+        except Exception as e:
+            raise RuntimeError(
+                "Unable to initialize Chrome on server. "
+                "This is often due to memory limits on free instances. "
+                f"Details: {str(e)}"
+            )
     else:
         from webdriver_manager.chrome import ChromeDriverManager
         driver = webdriver.Chrome(
@@ -290,6 +290,10 @@ def analyze_url():
             raise ValueError
     except (TypeError, ValueError):
         return jsonify({"error": "Page count must be a positive integer"}), 400
+
+    # Guardrail for Render free instances: cap scrape size to reduce OOM kills.
+    if os.environ.get("RENDER") and page_count > 1:
+        page_count = 1
 
     try:
         raw_reviews = fetch_yelp_reviews(url, page_count=page_count)
