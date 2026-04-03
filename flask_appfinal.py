@@ -69,17 +69,40 @@ def create_driver():
     chrome_options.add_experimental_option("useAutomationExtension", False)
 
     if is_linux:
+        # Render native runtime may not have system Chrome installed.
+        # Try system chromedriver first, then Selenium Manager auto-provision,
+        # then webdriver-manager as a final fallback.
+        driver = None
+        linux_binaries = [
+            "/usr/bin/chromium-browser",
+            "/usr/bin/chromium",
+            "/usr/bin/google-chrome",
+            "/usr/bin/google-chrome-stable",
+        ]
+
+        found_binary = next((b for b in linux_binaries if os.path.exists(b)), None)
+        if found_binary:
+            chrome_options.binary_location = found_binary
+
         try:
-            driver = webdriver.Chrome(
-                service=Service("/usr/bin/chromedriver"),
-                options=chrome_options
-            )
+            if os.path.exists("/usr/bin/chromedriver"):
+                driver = webdriver.Chrome(
+                    service=Service("/usr/bin/chromedriver"),
+                    options=chrome_options,
+                )
+            else:
+                # Selenium Manager path: can auto-manage driver/browser.
+                driver = webdriver.Chrome(options=chrome_options)
         except Exception:
-            from webdriver_manager.chrome import ChromeDriverManager
-            driver = webdriver.Chrome(
-                service=Service(ChromeDriverManager().install()),
-                options=chrome_options
-            )
+            try:
+                driver = webdriver.Chrome(options=chrome_options)
+            except Exception:
+                from webdriver_manager.chrome import ChromeDriverManager
+
+                driver = webdriver.Chrome(
+                    service=Service(ChromeDriverManager().install()),
+                    options=chrome_options,
+                )
     else:
         from webdriver_manager.chrome import ChromeDriverManager
         driver = webdriver.Chrome(
