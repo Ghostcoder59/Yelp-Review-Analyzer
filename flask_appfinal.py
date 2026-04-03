@@ -25,12 +25,22 @@ for resource in [('sentiment/vader_lexicon.zip', 'vader_lexicon'),
         nltk.download(resource[1], quiet=True)
 
 # --- Load models ---
+vectorizer = None
+model = None
 try:
     vectorizer = pickle.load(open("tfidf_vectorizer.pkl", "rb"))
     model = pickle.load(open("isolation_forest_yelp.pkl", "rb"))
     print("Models loaded successfully.")
 except Exception as e:
     print(f"Error loading models: {e}")
+
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(e):
+    app.logger.exception("Unhandled exception")
+    if request.path.startswith('/api/'):
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
+    return "Internal Server Error", 500
 
 
 def create_driver():
@@ -225,6 +235,9 @@ def preprocess_reviews(raw_reviews):
 
 
 def score_reviews(raw_reviews):
+    if vectorizer is None or model is None:
+        raise RuntimeError("Model files failed to load on server. Check tfidf_vectorizer.pkl and isolation_forest_yelp.pkl")
+
     clean_docs = preprocess_reviews(raw_reviews)
 
     # --- Features (must match training) ---
@@ -286,7 +299,10 @@ def analyze_url():
     if not raw_reviews:
         return jsonify({"error": "No reviews extracted. Yelp may have blocked the request."}), 404
 
-    results, susp_percentage = score_reviews(raw_reviews)
+    try:
+        results, susp_percentage = score_reviews(raw_reviews)
+    except Exception as e:
+        return jsonify({"error": f"Scoring failed: {str(e)}"}), 500
 
     return jsonify({
         "total_reviews": len(results),
