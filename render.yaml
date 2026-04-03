@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: yelp-ai-intelligence-dashboard
+    env: python
+    plan: free
+    buildCommand: bash render-build.sh
+    startCommand: gunicorn flask_appfinal:app
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8

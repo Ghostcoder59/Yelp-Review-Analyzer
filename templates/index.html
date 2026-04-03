@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yelp AI Intelligence Dashboard</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <nav class="sidebar glass-panel">
+            <h1 class="logo">🍽️ Yelp AI</h1>
+            <ul class="nav-links">
+                <li class="active" data-target="home-section">Home</li>
+                <li data-target="analyze-section">Analyze Review</li>
+                <li data-target="insights-section">Insights</li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="content-area">
+            
+            <!-- Home Section -->
+            <section id="home-section" class="page-section active fade-in">
+                <div class="glass-panel hero">
+                    <h2 class="hero-title">Review Intelligence <span class="gradient-text">Engine</span></h2>
+                    <p class="hero-subtitle">Identify anomalies, track sentiment, and combat fake reviews with advanced AI.</p>
+                    <div class="feature-grid">
+                        <div class="feature-card glass-panel-inner">
+                            <span class="icon">🚀</span>
+                            <h3>Machine Learning</h3>
+                            <p>Powered by Isolation Forests</p>
+                        </div>
+                        <div class="feature-card glass-panel-inner">
+                            <span class="icon">📊</span>
+                            <h3>Real-time Scraping</h3>
+                            <p>Automated Yelp ingestion</p>
+                        </div>
+                        <div class="feature-card glass-panel-inner">
+                            <span class="icon">🧠</span>
+                            <h3>Deep Insights</h3>
+                            <p>Vader Sentiment Analysis</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analyze Section -->
+            <section id="analyze-section" class="page-section hidden">
+                <h2 class="section-title">Analyze <span class="gradient-text">Reviews</span></h2>
+                
+                <div class="glass-panel form-panel">
+                    <div class="tab-content active" id="url-tab">
+                        <div class="input-group">
+                            <label>Yelp Business URL</label>
+                            <input type="text" id="url-input" placeholder="https://www.yelp.com/biz/...">
+                        </div>
+                        <div class="input-group">
+                            <label>Number of Pages to Scrape</label>
+                            <input type="number" id="pages-input" min="1" max="20" value="1">
+                        </div>
+                        <button id="analyze-url-btn" class="primary-btn">Scrape & Analyze</button>
+                        
+                        <!-- URL Loader -->
+                        <div id="url-loader" class="loader hidden">
+                            <div class="spinner"></div>
+                            <p>Firing up Selenium securely. Please wait (~30s)...</p>
+                        </div>
+
+                        <!-- URL Results -->
+                        <div id="url-result-container" class="result-container hidden">
+                            <div class="metric-row">
+                                <div class="metric-box glass-panel-inner">
+                                    <h4 id="url-total-reviews">0</h4>
+                                    <p>Reviews Extracted</p>
+                                </div>
+                                <div class="metric-box glass-panel-inner highlight">
+                                    <h4 id="url-fake-percent">0%</h4>
+                                    <p>Suspicious Activity</p>
+                                </div>
+                            </div>
+
+                            <!-- Live Scatter Chart -->
+                            <div class="chart-container glass-panel-inner">
+                                <canvas id="live-scatter-chart"></canvas>
+                            </div>
+
+                            <!-- List of Suspicious ones -->
+                            <div class="suspicious-list glass-panel-inner">
+                                <h3>Flagged Reviews</h3>
+                                <div id="flagged-reviews-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Insights Section -->
+            <section id="insights-section" class="page-section hidden">
+                <h2 class="section-title">Macro <span class="gradient-text">Insights</span></h2>
+                <div class="glass-panel info-banner">
+                    <p><strong>Database Overview:</strong> This dashboard models our training set representing baseline consumer behaviors. It processes <code>yelp_reviews_clean.csv</code> behind the scenes to render real ML thresholds across millions of records.</p>
+                </div>
+                
+                <div class="metric-row" id="insight-metrics">
+                    <div class="metric-box glass-panel">
+                        <h4 id="insight-total">Loading...</h4>
+                        <p>Total Database Reviews</p>
+                    </div>
+                    <div class="metric-box glass-panel">
+                        <h4 id="insight-rating">Loading...</h4>
+                        <p>Average Rating</p>
+                    </div>
+                    <div class="metric-box glass-panel">
+                        <h4 id="insight-words">Loading...</h4>
+                        <p>Avg Word Count</p>
+                    </div>
+                </div>
+
+                <div class="chart-wrapper glass-panel">
+                    <canvas id="rating-dist-chart"></canvas>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
