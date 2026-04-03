@@ -2,11 +2,19 @@
 # exit on error
 set -o errexit
 
-# Install Chromium + chromedriver (needed for Selenium on Render)
-apt-get update -qq
-apt-get install -y -qq chromium-browser chromium-chromedriver \
-  || apt-get install -y -qq chromium chromium-driver \
-  || echo "WARNING: Could not install chromium via apt — scraping will fail on server"
+# Attempt to install Chromium + chromedriver when system package install is available.
+# Render native Python builds may not allow apt operations (read-only filesystem).
+if command -v apt-get >/dev/null 2>&1 && [ -d "/var/lib/apt/lists" ]; then
+  if apt-get update -qq >/dev/null 2>&1; then
+    apt-get install -y -qq chromium-browser chromium-chromedriver >/dev/null 2>&1 \
+      || apt-get install -y -qq chromium chromium-driver >/dev/null 2>&1 \
+      || echo "WARNING: Could not install chromium via apt. URL scraping may fail on server."
+  else
+    echo "WARNING: apt-get is present but not writable in this build environment. Skipping OS package install."
+  fi
+else
+  echo "WARNING: apt-get not available. Skipping OS package install."
+fi
 
 # Make sure requirements.txt is UTF-8 before pip reads it.
 python - <<'PY'
