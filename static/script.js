@@ -1,4 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
+    async function parseApiResponse(res) {
+        const contentType = res.headers.get('content-type') || '';
+
+        if (contentType.includes('application/json')) {
+            const jsonData = await res.json();
+            if (!res.ok) {
+                throw new Error(jsonData.error || `Request failed with status ${res.status}`);
+            }
+            return jsonData;
+        }
+
+        const text = await res.text();
+        const shortText = (text || '').replace(/\s+/g, ' ').slice(0, 180);
+        throw new Error(
+            `Server returned non-JSON response (HTTP ${res.status}). ${shortText || 'Try again in a moment.'}`
+        );
+    }
+
     // Nav logic
     const navLinks = document.querySelectorAll('.nav-links li');
     const sections = document.querySelectorAll('.page-section');
@@ -40,9 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({url: urlObj, pages: pageCount})
             });
-            const data = await res.json();
-            
-            if (data.error) throw new Error(data.error);
+            const data = await parseApiResponse(res);
             
             document.getElementById('url-total-reviews').innerText = data.total_reviews;
             document.getElementById('url-fake-percent').innerText = data.suspicious_percentage.toFixed(1) + "%";
@@ -113,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (insightsLoaded) return;
         try {
             const res = await fetch('/api/insights');
-            const data = await res.json();
+            const data = await parseApiResponse(res);
             
             document.getElementById('insight-total').innerText = data.total_reviews.toLocaleString();
             document.getElementById('insight-rating').innerText = data.average_rating.toFixed(2) + " ⭐";
@@ -150,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             insightsLoaded = true;
         } catch(e) {
-            console.error("Failed to load insights");
+            console.error("Failed to load insights:", e.message);
         }
     }
 });
